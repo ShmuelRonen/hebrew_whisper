@@ -1,0 +1,6 @@
+gradio
+numpy
+transformers
+librosa
+soundfile
+tqdm
