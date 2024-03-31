@@ -2,7 +2,8 @@
 
 A powerful transcription and translation tool leveraging the ivrit-ai/whisper-large-v2-tuned model for high-quality, unlimited-length audio processing with enhanced paragraph splitting and temporary file management for a clean workspace.
 
-![GUI](https://github.com/ShmuelRonen/hebrew_whisper/assets/screenshot.png)
+![screenshot](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/fc3023b0-7186-4dce-b426-1ef1a56da5f6)
+
 
 ## Installation steps
 It's recommended to install in a virtual environment for Python projects to manage dependencies efficiently.
