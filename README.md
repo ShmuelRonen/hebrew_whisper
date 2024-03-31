@@ -6,6 +6,7 @@ A powerful transcription and translation tool leveraging the ivrit-ai/whisper-la
 
 
 ## Installation steps
+
 It's recommended to install in a virtual environment for Python projects to manage dependencies efficiently.
 
 Clone the repository
@@ -14,6 +15,13 @@ Clone the repository
 git clone https://github.com/ShmuelRonen/hebrew_whisper.git
 cd hebrew_whisper
 ```
+
+## NEW - One click installer and executor:
+...
+init_env.bat
+...
+
+## Manual installation:
 
 It's recommended to create and activate a virtual environment here:
 ```
