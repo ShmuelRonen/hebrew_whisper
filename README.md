@@ -17,7 +17,9 @@ cd hebrew_whisper
 ```
 
 ## NEW - One click installer and executor:
+
 ...
+
 init_env.bat
 ...
 
