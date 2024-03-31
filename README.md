@@ -18,10 +18,11 @@ cd hebrew_whisper
 
 ## NEW - One click installer and executor:
 
-...
+```
+Double click on:
 
 init_env.bat
-...
+```
 
 ## Manual installation:
 
