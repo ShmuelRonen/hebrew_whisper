@@ -4,6 +4,8 @@ A powerful transcription and translation tool leveraging the ivrit-ai/whisper-la
 
 ![screenshot](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/fc3023b0-7186-4dce-b426-1ef1a56da5f6)
 
+# Google colab hebrew_wispher.ipynb added
+
 
 ## Installation steps
 
