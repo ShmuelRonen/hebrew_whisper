@@ -18,7 +18,7 @@ git clone https://github.com/ShmuelRonen/hebrew_whisper.git
 cd hebrew_whisper
 ```
 
-## NEW - One click installer and executor:
+### NEW - One click installer and executor:
 
 ```
 Double click on:
@@ -26,7 +26,7 @@ Double click on:
 init_env.bat
 ```
 
-## Manual installation:
+### Manual installation:
 
 It's recommended to create and activate a virtual environment here:
 ```
