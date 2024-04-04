@@ -9,6 +9,7 @@ import soundfile as sf
 from tqdm import tqdm
 import shutil
 import re
+from sys import platform
 
 SAMPLING_RATE = 16000
 
@@ -72,7 +73,13 @@ def transcribe_and_translate(audio_file, source_language):
     if rate != SAMPLING_RATE:
         audio = librosa.resample(audio, orig_sr=rate, target_sr=SAMPLING_RATE)
     
-    temp_dir = tempfile.mkdtemp(dir="E:\\hebrew wispher")
+
+    if platform == "linux" or platform == "linux2":
+        temp_directory="/tmp/hebrew_wispher/"
+    else:
+        temp_directory="D:\\hebrew wispher\\"
+
+    temp_dir = tempfile.mkdtemp(dir=temp_directory)
     
     chunk_duration = 30  # Duration in seconds
     chunks = []
@@ -103,7 +110,7 @@ def transcribe_and_translate(audio_file, source_language):
         transcribed_text += chunk_text + " "
         print(f"Processed chunk {i+1}/{len(chunks)}")
     
-    output_dir = "E:\\hebrew wispher\\output"
+    output_dir = temp_directory + "output"
     os.makedirs(output_dir, exist_ok=True)
     
     # Split the transcribed text into paragraphs
@@ -138,4 +145,10 @@ interface = gr.Interface(
     description=description
 )
 
-interface.launch()
+is_share_link = os.environ.get("IS_SHARE_LINK", "False")
+print(f"is_share_link={is_share_link}")
+
+if is_share_link == "True":
+    interface.launch(share=True)
+else:
+    interface.launch()
