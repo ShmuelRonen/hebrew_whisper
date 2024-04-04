@@ -4,6 +4,12 @@ A powerful transcription and translation tool leveraging the ivrit-ai/whisper-la
 
 ![screenshot](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/fc3023b0-7186-4dce-b426-1ef1a56da5f6)
 
+#### NEW: Docker support brunch By dawnburst:
+```
+https://github.com/dawnburst/hebrew_whisper/tree/support-docker
+```
+
+
 #### NEW: Google colab hebrew_wispher.ipynb added
 
 
@@ -18,7 +24,7 @@ git clone https://github.com/ShmuelRonen/hebrew_whisper.git
 cd hebrew_whisper
 ```
 
-### NEW - One click installer and executor:
+#### NEW - One click installer and executor:
 
 ```
 Double click on:
