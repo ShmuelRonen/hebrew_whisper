@@ -51,6 +51,29 @@ python app.py
 
 This will start a Gradio interface locally, which you can access through the provided URL in your command line interface.
 
+
+### Docker installation:
+
+Build image command:
+```
+git clone https://github.com/ShmuelRonen/hebrew_whisper.git
+cd hebrew_whisper
+docker build -t hebrew_whisper:latest .
+```
+
+Run a docker container:
+```
+docker run --rm -it --gpus all -p 7860:7860 -e IS_SHARE_LINK=True --name hebrew_whisper hebrew_whisper:latest
+```
+
+Open one of the the links:  
+For local URL:  
+Running on local URL:  http://127.0.0.1:7860  
+
+For public URL, please replace the {generated_number} with the one you got in the command line.  
+Running on public URL: [https://{generated_number}.gradio.live](https://{generated_number}.gradio.live)
+
+
 ## How to Use
 Once the application is running, follow these steps:
 1. Upload your audio file through the Gradio interface.
