@@ -3,6 +3,7 @@ import gradio as gr
 import librosa
 import numpy as np
 import os
+import re  # Import the missing module
 import shutil
 import soundfile as sf
 import tempfile
@@ -38,30 +39,57 @@ def transcribe(audio_file):
     return transcribed_text
 
 def translate_text(text, target_lang):
-    # Google Translate's 'he' is for Hebrew and 'en' for English.
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
     translated_text = translator.translate(text, dest=translations[target_lang]).text
     return translated_text
+    
+def split_into_paragraphs(text, min_words_per_paragraph=20):
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    paragraphs = []
+    current_paragraph = []  # This is correctly a list, to accumulate sentences.
+
+    for sentence in sentences:
+        words_in_sentence = sentence.split()  # Split the sentence into words to count them.
+        current_paragraph.extend(words_in_sentence)  # Extend the list of words in the current paragraph.
+        # Check if the current paragraph has reached the minimum word count to form a paragraph.
+        if len(current_paragraph) >= min_words_per_paragraph:
+            paragraphs.append(' '.join(current_paragraph))  # Join words to form the paragraph text.
+            current_paragraph = []  # Reset for the next paragraph.
+
+    # After the loop, if there are any remaining words, form the final paragraph.
+    if current_paragraph:
+        paragraphs.append(' '.join(current_paragraph))  # This joins the remaining words into a paragraph.
+
+    return '\n\n'.join(paragraphs)  # Join paragraphs with two newlines.
+
 
 def transcribe_and_translate(audio_file, target_language):
-    transcribed_text = transcribe(audio_file)
-    detected_language = translator.detect(transcribed_text).lang
-
-    # Mapping of target language choices to Google Translate's language codes
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
 
-    # If the detected language is Hebrew and the target language is also Hebrew, return the transcribed text as is
-    if detected_language == 'he' and target_language == 'Hebrew':
-        return transcribed_text
-    # If the detected language is Hebrew but the target language is not Hebrew, translate the text
-    elif detected_language == 'he' and target_language != 'Hebrew':
-        transcribed_text = translate_text(transcribed_text, target_language)
-    # If the detected language is not Hebrew and the target language is not the same as the detected language,
-    # translate the text. This is for English transcriptions that need to be translated to another language.
-    elif detected_language != 'he' and translations[target_language] != detected_language:
-        transcribed_text = translate_text(transcribed_text, target_language)
+    transcribed_text = transcribe(audio_file)
+    # Detect the primary language of the transcribed text
+    detected_language_code = translator.detect(transcribed_text).lang
 
-    return transcribed_text
+    # Account for both 'iw' and 'he' as codes for Hebrew
+    if detected_language_code == 'iw' or detected_language_code == 'he':
+        detected_language = 'Hebrew'
+    else:
+        detected_language = 'English' if detected_language_code == 'en' else None
+
+    print(f"Detected Language: {detected_language}")  # Debug for verification
+
+    if translations.get(target_language) != detected_language_code:
+        transcribed_text = translate_text(transcribed_text, target_language)
+    
+    # Apply paragraph splitting based on detected language
+    if detected_language == 'Hebrew':
+        final_text = split_into_paragraphs(transcribed_text)
+    elif detected_language == 'English' and target_language == 'English':
+        final_text = split_into_paragraphs(transcribed_text)
+    else:
+        final_text = transcribed_text
+
+    return final_text
 
 
 title = "Unlimited Length Transcription and Translation"
