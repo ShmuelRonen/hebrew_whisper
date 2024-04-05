@@ -4,7 +4,7 @@ A powerful transcription and translation tool leveraging the ivrit-ai/whisper-la
 
 ![screenshot](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/fc3023b0-7186-4dce-b426-1ef1a56da5f6)
 
-#### NEW: Added the ability to translate the sound file to the other languages in the menu using Google Translate.
+#### NEW: Added the ability to translate the sound file text to the other languages in the menu using Google Translate.
 please update the installation:
 ```
 git pull
