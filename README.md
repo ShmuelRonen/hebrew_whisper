@@ -85,7 +85,7 @@ _____________
 <h2>Audio Transcription and Translation <br/> <span style="font-size:12px">Powered by ivrit-ai/whisper-large-v2-tuned</span> </h2>
 
 <div>
-    <a href='[https://github.com/openai/whisper](https://huggingface.co/ivrit-ai/whisper-large-v2-tuned)' target='_blank'>Whisper Model</a>&emsp;
+    <a href='https://huggingface.co/ivrit-ai/whisper-large-v2-tuned' target='_blank'>Hebrew Whisper Model</a>&emsp;
 </div>
 <br>
 
