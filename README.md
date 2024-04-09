@@ -90,7 +90,8 @@ _____________
 <br>
 
 ## Acknowledgement
-Special thanks to ivrit-ai for providing the Hebrew Whisper model, making high-quality transcription and translation accessible to developers.
+Special thanks to Kinneret Wm, Yam Peleg, Yair Lifshitz, Yanir Marmor from ivrit-ai for providing the Hebrew Whisper model,
+making high-quality transcription and translation accessible to developers.
 
 ## Disclaimer
 This project is intended for educational and development purposes. It leverages publicly available models and APIs. Please ensure to comply with the terms of use of the underlying models and frameworks.
