@@ -2,7 +2,9 @@
 
 A powerful transcription and translation tool leveraging the ivrit-ai/whisper-large-v2-tuned model for high-quality, unlimited-length audio processing with enhanced paragraph splitting and temporary file management for a clean workspace.
 
-![screenshot](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/fc3023b0-7186-4dce-b426-1ef1a56da5f6)
+![if1](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/c21ae1bc-9925-4d96-83cf-b9e2aa6993ec)
+
+#### NEW: Creating an SRT file in Hebrew from any language.
 
 #### NEW: Added the ability to translate the sound file text to the other languages in the menu.
 please update the installation:
