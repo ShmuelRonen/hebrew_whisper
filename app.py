@@ -3,12 +3,14 @@ import gradio as gr
 import librosa
 import numpy as np
 import os
-import re  # Import the missing module
+import re
 import shutil
 import soundfile as sf
 import tempfile
 import torch
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
+import whisper
+import datetime
 
 SAMPLING_RATE = 16000
 model_name = 'ivrit-ai/whisper-large-v2-tuned'
@@ -46,51 +48,86 @@ def translate_text(text, target_lang):
 def split_into_paragraphs(text, min_words_per_paragraph=20):
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     paragraphs = []
-    current_paragraph = []  # This is correctly a list, to accumulate sentences.
+    current_paragraph = []
 
     for sentence in sentences:
-        words_in_sentence = sentence.split()  # Split the sentence into words to count them.
-        current_paragraph.extend(words_in_sentence)  # Extend the list of words in the current paragraph.
-        # Check if the current paragraph has reached the minimum word count to form a paragraph.
+        words_in_sentence = sentence.split()
+        current_paragraph.extend(words_in_sentence)
         if len(current_paragraph) >= min_words_per_paragraph:
-            paragraphs.append(' '.join(current_paragraph))  # Join words to form the paragraph text.
-            current_paragraph = []  # Reset for the next paragraph.
+            paragraphs.append(' '.join(current_paragraph))
+            current_paragraph = []
 
-    # After the loop, if there are any remaining words, form the final paragraph.
     if current_paragraph:
-        paragraphs.append(' '.join(current_paragraph))  # This joins the remaining words into a paragraph.
+        paragraphs.append(' '.join(current_paragraph))
 
-    return '\n\n'.join(paragraphs)  # Join paragraphs with two newlines.
+    return '\n\n'.join(paragraphs)
 
+def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_length=50):
+    print("Starting transcription and translation process...")
 
-def transcribe_and_translate(audio_file, target_language):
+    audio, rate = librosa.load(audio_file_path, sr=None)
+    audio_numpy = librosa.resample(audio, orig_sr=rate, target_sr=16000)
+
+    temp_file_name = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmpfile:
+            temp_file_name = tmpfile.name
+            sf.write(tmpfile.name, audio_numpy, 16000)
+
+        transcription_result = whisper.load_model("large").transcribe(audio=temp_file_name)
+
+        srt_content = ""
+        for segment in transcription_result['segments']:
+            start_time = str(datetime.timedelta(seconds=int(segment['start']))) + ',000'
+            end_time = str(datetime.timedelta(seconds=int(segment['end']))) + ',000'
+            text = segment['text']
+            segment_id = segment['id'] + 1
+
+            lines = []
+            while len(text) > max_line_length:
+                split_index = text.rfind(' ', 0, max_line_length)
+                if split_index == -1:
+                    split_index = max_line_length
+                lines.append(text[:split_index].strip())
+                text = text[split_index:].strip()
+            lines.append(text)
+
+            srt_entry = f"{segment_id}\n{start_time} --> {end_time}\n"
+            srt_entry += "\n".join(lines) + "\n\n"
+            srt_content += srt_entry
+
+        hebrew_srt_content = translator.translate(srt_content, dest='he').text
+
+        os.makedirs("output", exist_ok=True)
+        srt_file_path = os.path.join("output", "output.srt")
+        with open(srt_file_path, "w", encoding="utf-8") as srt_file:
+            srt_file.write(hebrew_srt_content)
+
+        return hebrew_srt_content
+
+    finally:
+        if temp_file_name:
+            os.remove(temp_file_name)
+
+def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox):
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
-
     transcribed_text = transcribe(audio_file)
-    # Detect the primary language of the transcribed text
     detected_language_code = translator.detect(transcribed_text).lang
 
-    # Account for both 'iw' and 'he' as codes for Hebrew
-    if detected_language_code == 'iw' or detected_language_code == 'he':
-        detected_language = 'Hebrew'
+    if generate_srt_checkbox:
+        srt_result = generate_srt_content(audio_file, 'Hebrew')
+        return srt_result
     else:
-        detected_language = 'English' if detected_language_code == 'en' else None
+        if isinstance(target_language, list):
+            target_language = target_language[0]
 
-    print(f"Detected Language: {detected_language}")  # Debug for verification
+        if translations.get(target_language) != detected_language_code:
+            translated_text = translate_text(transcribed_text, target_language)
+        else:
+            translated_text = transcribed_text
 
-    if translations.get(target_language) != detected_language_code:
-        transcribed_text = translate_text(transcribed_text, target_language)
-    
-    # Apply paragraph splitting based on detected language
-    if detected_language == 'Hebrew':
-        final_text = split_into_paragraphs(transcribed_text)
-    elif detected_language == 'English' and target_language == 'English':
-        final_text = split_into_paragraphs(transcribed_text)
-    else:
-        final_text = transcribed_text
-
-    return final_text
-
+        final_text = split_into_paragraphs(translated_text)
+        return final_text
 
 title = "Unlimited Length Transcription and Translation"
 description = "With ivrit-ai/whisper-large-v2-tuned | GUI by Shmuel Ronen"
@@ -99,9 +136,10 @@ interface = gr.Interface(
     fn=transcribe_and_translate,
     inputs=[
         gr.Audio(type="filepath", label="Upload Audio File"),
-        gr.Dropdown(choices=['Hebrew', 'English', 'Spanish', 'French'], label="Target Language")
+        gr.Dropdown(choices=['Hebrew', 'English', 'Spanish', 'French'], label="Target Language"),
+        gr.Checkbox(label="Generate Hebrew SRT File")
     ],
-    outputs=gr.Textbox(label="Transcription / Translation"),
+    outputs=gr.Textbox(label="Transcription / Translation / SRT Result"),
     title=title,
     description=description
 )

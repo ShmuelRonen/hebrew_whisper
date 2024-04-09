@@ -4,4 +4,7 @@ transformers
 librosa
 soundfile
 tqdm
+soundfile
 googletrans==4.0.0-rc1
+openai-whisper
+nltk
