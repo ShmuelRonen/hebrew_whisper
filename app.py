@@ -44,7 +44,7 @@ def translate_text(text, target_lang):
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
     translated_text = translator.translate(text, dest=translations[target_lang]).text
     return translated_text
-    
+
 def split_into_paragraphs(text, min_words_per_paragraph=20):
     sentences = re.split(r'(?<=[.!?])\s+', text.strip())
     paragraphs = []
