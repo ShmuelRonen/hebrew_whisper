@@ -4,6 +4,8 @@ A powerful transcription and translation tool leveraging the ivrit-ai/whisper-la
 
 ![if1](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/c21ae1bc-9925-4d96-83cf-b9e2aa6993ec)
 
+#### NEW: The output files will saved automaticly in output folder as .txt or .srt.
+
 #### NEW: Creating an SRT file in Hebrew from any language.
 
 #### NEW: Added the ability to translate the sound file text to the other languages in the menu.
