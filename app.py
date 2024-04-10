@@ -127,6 +127,12 @@ def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox)
             translated_text = transcribed_text
 
         final_text = split_into_paragraphs(translated_text)
+
+        os.makedirs("output", exist_ok=True)
+        result_file_path = os.path.join("output", "result.txt")
+        with open(result_file_path, "w", encoding="utf-8") as result_file:
+            result_file.write(final_text)
+
         return final_text
 
 title = "Unlimited Length Transcription and Translation"
