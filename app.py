@@ -8,6 +8,7 @@ import shutil
 import soundfile as sf
 import tempfile
 import torch
+import time
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import whisper
 import datetime
@@ -126,28 +127,27 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
 def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox):
     if not target_language:
         return "Please choose a Target Language"
+
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
-    
+
     audio = AudioSegment.from_file(audio_file)
     audio_numpy = np.array(audio.get_array_of_samples(), dtype=np.float32) / 32768.0
     audio_numpy = librosa.resample(audio_numpy, orig_sr=audio.frame_rate, target_sr=16000)
-    
+
     transcribed_text = transcribe(audio_numpy)
-    detected_language_code = translator.detect(transcribed_text).lang
 
     if generate_srt_checkbox:
-        srt_result = generate_srt_content(audio_file, 'Hebrew')
+        srt_result = generate_srt_content(audio_file, target_language)
         return srt_result
     else:
         if isinstance(target_language, list):
             target_language = target_language[0]
 
-        if translations.get(target_language) != detected_language_code:
+        if translations.get(target_language) != 'he':
             translated_text = translate_text(transcribed_text, target_language)
+            final_text = split_into_paragraphs(translated_text)
         else:
-            translated_text = transcribed_text
-
-        final_text = split_into_paragraphs(translated_text)
+            final_text = split_into_paragraphs(transcribed_text)
 
         os.makedirs("output", exist_ok=True)
         result_file_path = os.path.join("output", "result.txt")
