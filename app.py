@@ -94,25 +94,38 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
             lines.append(text)
 
             srt_entry = f"{segment_id}\n{start_time} --> {end_time}\n"
-            srt_entry += "\n".join(lines) + "\n\n"
-            srt_content += srt_entry
+            
+            translated_lines = []
+            for line in lines:
+                for attempt in range(3):  # Retry translation up to 3 times
+                    try:
+                        translated_line = translator.translate(line, dest='he').text
+                        translated_lines.append(translated_line)
+                        break
+                    except Exception as e:
+                        print(f"Translation failed (attempt {attempt+1}): {str(e)}")
+                        if attempt < 2:
+                            time.sleep(1)  # Delay before retrying
+                        else:
+                            translated_lines.append(line)  # Use original English line if translation fails
 
-        hebrew_srt_content = translator.translate(srt_content, dest='he').text
+            srt_entry += "\n".join(translated_lines) + "\n\n"
+            srt_content += srt_entry
 
         os.makedirs("output", exist_ok=True)
         srt_file_path = os.path.join("output", "output.srt")
         with open(srt_file_path, "w", encoding="utf-8") as srt_file:
-            srt_file.write(hebrew_srt_content)
+            srt_file.write(srt_content)
 
-        return hebrew_srt_content
+        return srt_content
 
     finally:
         if temp_file_name:
             os.remove(temp_file_name)
 
-from pydub import AudioSegment
-
 def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox):
+    if not target_language:
+        return "Please choose a Target Language"
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
     
     audio = AudioSegment.from_file(audio_file)
