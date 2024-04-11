@@ -10,11 +10,6 @@ if not exist "venv" (
 rem Activate the virtual environment
 call venv\Scripts\activate
 
-rem Perform git pull to update the repository
-echo Updating the repository...
-git pull
-echo Repository updated.
-
 rem Install requirements
 echo Installing requirements...
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
