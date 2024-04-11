@@ -7,4 +7,9 @@ tqdm
 soundfile
 googletrans==4.0.0-rc1
 openai-whisper
+deep_translator
 nltk
+ffmpeg-python
+requests
+anthropic
+httpx
