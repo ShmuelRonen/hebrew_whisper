@@ -19,20 +19,18 @@ model = WhisperForConditionalGeneration.from_pretrained(model_name).to(device)
 processor = WhisperProcessor.from_pretrained(model_name)
 translator = Translator()
 
-def transcribe(audio_file):
-    audio, rate = librosa.load(audio_file, sr=None)
-    if rate != SAMPLING_RATE:
-        audio = librosa.resample(audio, orig_sr=rate, target_sr=SAMPLING_RATE)
+def transcribe(audio_numpy, sampling_rate=16000):
+    if audio_numpy.ndim > 1:
+        audio_numpy = audio_numpy.mean(axis=1)
 
     temp_dir = tempfile.mkdtemp()
-    chunks = np.array_split(audio, indices_or_sections=int(np.ceil(len(audio) / (SAMPLING_RATE * 30))))  # 30s chunks
+    chunks = np.array_split(audio_numpy, indices_or_sections=int(np.ceil(len(audio_numpy) / (sampling_rate * 30))))  # 30s chunks
     transcribed_text = ""
 
     for i, chunk in enumerate(chunks):
         chunk_path = os.path.join(temp_dir, f"chunk_{i}.wav")
-        sf.write(chunk_path, chunk, samplerate=SAMPLING_RATE)
-        chunk_audio, _ = librosa.load(chunk_path, sr=SAMPLING_RATE)
-        input_features = processor(chunk_audio, sampling_rate=SAMPLING_RATE, return_tensors="pt").input_features.to(device)
+        sf.write(chunk_path, chunk, samplerate=sampling_rate)
+        input_features = processor(chunk, sampling_rate=sampling_rate, return_tensors="pt").input_features.to(device)
         predicted_ids = model.generate(input_features, num_beams=5)
         chunk_text = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
         transcribed_text += chunk_text + " "
@@ -62,11 +60,14 @@ def split_into_paragraphs(text, min_words_per_paragraph=20):
 
     return '\n\n'.join(paragraphs)
 
+from pydub import AudioSegment
+
 def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_length=50):
     print("Starting transcription and translation process...")
 
-    audio, rate = librosa.load(audio_file_path, sr=None)
-    audio_numpy = librosa.resample(audio, orig_sr=rate, target_sr=16000)
+    audio = AudioSegment.from_file(audio_file_path)
+    audio_numpy = np.array(audio.get_array_of_samples(), dtype=np.float32) / 32768.0
+    audio_numpy = librosa.resample(audio_numpy, orig_sr=audio.frame_rate, target_sr=16000)
 
     temp_file_name = None
     try:
@@ -109,9 +110,16 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
         if temp_file_name:
             os.remove(temp_file_name)
 
+from pydub import AudioSegment
+
 def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox):
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
-    transcribed_text = transcribe(audio_file)
+    
+    audio = AudioSegment.from_file(audio_file)
+    audio_numpy = np.array(audio.get_array_of_samples(), dtype=np.float32) / 32768.0
+    audio_numpy = librosa.resample(audio_numpy, orig_sr=audio.frame_rate, target_sr=16000)
+    
+    transcribed_text = transcribe(audio_numpy)
     detected_language_code = translator.detect(transcribed_text).lang
 
     if generate_srt_checkbox:
