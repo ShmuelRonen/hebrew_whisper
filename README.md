@@ -1,8 +1,8 @@
 <h3>GUI for Unlimited Transcription and Translation with Whisper Hebrew</h3>
 
-A powerful transcription and translation tool leveraging the ivrit-ai/whisper-large-v2-tuned model for high-quality, unlimited-length audio processing with enhanced paragraph splitting and temporary file management for a clean workspace.
+A powerful transcription and translation tool leveraging the ivrit-ai/whisper-v2-d3-e3 model for high-quality, unlimited-length audio processing with enhanced paragraph splitting and temporary file management for a clean workspace.
 
-![if1](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/c21ae1bc-9925-4d96-83cf-b9e2aa6993ec)
+![HW](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/9ed4f4c1-ea5f-4c21-91b9-3c1369308dcc)
 
 #### NEW: The output files will saved automaticly in output folder as .txt or .srt.
 
@@ -18,9 +18,6 @@ git pull
 ```
 https://github.com/dawnburst/hebrew_whisper/tree/support-docker
 ```
-
-
-#### NEW: Google colab hebrew_wispher.ipynb added
 
 
 ## Installation steps
@@ -87,12 +84,12 @@ _____________
 <h2>Audio Transcription and Translation <br/> <span style="font-size:12px">Powered by ivrit-ai/whisper-large-v2-tuned</span> </h2>
 
 <div>
-    <a href='https://huggingface.co/ivrit-ai/whisper-large-v2-tuned' target='_blank'>Hebrew Whisper Model</a>&emsp;
+    <a href='https://huggingface.co/ivrit-ai/whisper-v2-d3-e3' target='_blank'>Hebrew new Whisper Model</a>&emsp;
 </div>
 <br>
 
 ## Acknowledgement
-Special thanks to Kinneret Wm, Yam Peleg, Yair Lifshitz, Yanir Marmor from ivrit-ai for providing the Hebrew Whisper model,
+Special thanks to Kinneret Wm, Yam Peleg, Yair Lifshitz, Yanir Marmor from ivrit-ai for providing the new impruve Hebrew Whisper model,
 making high-quality transcription and translation accessible to developers.
 
 ## Disclaimer
