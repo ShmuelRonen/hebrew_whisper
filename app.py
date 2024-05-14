@@ -1,3 +1,4 @@
+
 from googletrans import Translator
 import gradio as gr
 import librosa
@@ -14,11 +15,20 @@ import whisper
 import datetime
 
 SAMPLING_RATE = 16000
-model_name = 'ivrit-ai/whisper-large-v2-tuned'
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
+model_name = 'ivrit-ai/whisper-v2-d3-e3'
+device = "cuda:0"
 model = WhisperForConditionalGeneration.from_pretrained(model_name).to(device)
 processor = WhisperProcessor.from_pretrained(model_name)
 translator = Translator()
+
+def is_hebrew(text):
+    return bool(re.search(r'[\u0590-\u05FF]', text))
+
+def format_text(text):
+    if is_hebrew(text):
+        return f'<div style="text-align: right; direction: rtl;">{text}</div>'
+    else:
+        return f'<div style="text-align: left; direction: ltr;">{text}</div>'
 
 def transcribe(audio_numpy, sampling_rate=16000):
     if audio_numpy.ndim > 1:
@@ -118,7 +128,7 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
         with open(srt_file_path, "w", encoding="utf-8") as srt_file:
             srt_file.write(srt_content)
 
-        return srt_content
+        return format_text(srt_content)
 
     finally:
         if temp_file_name:
@@ -126,7 +136,7 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
 
 def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox):
     if not target_language:
-        return "Please choose a Target Language"
+        return format_text("Please choose a Target Language")
 
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
 
@@ -134,7 +144,20 @@ def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox)
     audio_numpy = np.array(audio.get_array_of_samples(), dtype=np.float32) / 32768.0
     audio_numpy = librosa.resample(audio_numpy, orig_sr=audio.frame_rate, target_sr=16000)
 
+    # Check GPU usage before transcription
+    if torch.cuda.is_available():
+        print("GPU is available")
+        gpu_info = torch.cuda.get_device_properties(0)
+        print(f"GPU name: {gpu_info.name}")
+        print(f"GPU memory usage before transcription:")
+        print(torch.cuda.memory_summary(device=None, abbreviated=False))
+
     transcribed_text = transcribe(audio_numpy)
+
+    # Check GPU usage after transcription
+    if torch.cuda.is_available():
+        print(f"GPU memory usage after transcription:")
+        print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
     if generate_srt_checkbox:
         srt_result = generate_srt_content(audio_file, target_language)
@@ -154,10 +177,10 @@ def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox)
         with open(result_file_path, "w", encoding="utf-8") as result_file:
             result_file.write(final_text)
 
-        return final_text
+        return format_text(final_text)
 
 title = "Unlimited Length Transcription and Translation"
-description = "With ivrit-ai/whisper-large-v2-tuned | GUI by Shmuel Ronen"
+description = "With: ivrit-ai/whisper-v2-d3-e3 | GUI by Shmuel Ronen"
 
 interface = gr.Interface(
     fn=transcribe_and_translate,
@@ -166,10 +189,17 @@ interface = gr.Interface(
         gr.Dropdown(choices=['Hebrew', 'English', 'Spanish', 'French'], label="Target Language"),
         gr.Checkbox(label="Generate Hebrew SRT File")
     ],
-    outputs=gr.Textbox(label="Transcription / Translation / SRT Result"),
+    outputs=gr.HTML(label="Transcription / Translation / SRT Result"),
     title=title,
     description=description
 )
+
+interface.css = """
+    #output_text, #output_text * {
+        text-align: right !important;
+        direction: rtl !important;
+    }
+"""
 
 if __name__ == "__main__":
     interface.launch()
