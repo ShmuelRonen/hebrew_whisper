@@ -73,6 +73,7 @@ def split_into_paragraphs(text, min_words_per_paragraph=20):
 
 from pydub import AudioSegment
 
+
 def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_length=50):
     print("Starting transcription and translation process...")
 
@@ -105,7 +106,7 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
             lines.append(text)
 
             srt_entry = f"{segment_id}\n{start_time} --> {end_time}\n"
-            
+
             translated_lines = []
             for line in lines:
                 for attempt in range(3):  # Retry translation up to 3 times
@@ -128,7 +129,12 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
         with open(srt_file_path, "w", encoding="utf-8") as srt_file:
             srt_file.write(srt_content)
 
-        return format_text(srt_content)
+        # הפיכת srt_content לפורמט HTML עם שורות נפרדות
+        srt_html_content = ""
+        for line in srt_content.split('\n'):
+            srt_html_content += f"<div>{line}</div>"
+
+        return format_text(srt_html_content)
 
     finally:
         if temp_file_name:
