@@ -81,7 +81,7 @@ _____________
 
 <div align="center">
 
-<h2>Audio Transcription and Translation <br/> <span style="font-size:12px">Powered by ivrit-ai/whisper-large-v2-tuned</span> </h2>
+<h2>Audio Transcription and Translation <br/> <span style="font-size:12px">Powered by Hebrew whisper-v2-d3-e3</span> </h2>
 
 <div>
     <a href='https://huggingface.co/ivrit-ai/whisper-v2-d3-e3' target='_blank'>Hebrew new Whisper Model</a>&emsp;
