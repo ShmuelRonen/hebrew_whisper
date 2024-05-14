@@ -1,4 +1,3 @@
-
 from googletrans import Translator
 import gradio as gr
 import librosa
@@ -13,12 +12,15 @@ import time
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import whisper
 import datetime
+from pydub import AudioSegment
 
 SAMPLING_RATE = 16000
-model_name = 'ivrit-ai/whisper-v2-d3-e3'
-device = "cuda:0"
-model = WhisperForConditionalGeneration.from_pretrained(model_name).to(device)
-processor = WhisperProcessor.from_pretrained(model_name)
+english_model_name = 'large-v2'
+hebrew_model_name = 'ivrit-ai/whisper-v2-d3-e3'
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
+english_model = whisper.load_model(english_model_name, device=device)
+hebrew_processor = WhisperProcessor.from_pretrained(hebrew_model_name)
+hebrew_model = WhisperForConditionalGeneration.from_pretrained(hebrew_model_name).to(device)
 translator = Translator()
 
 def is_hebrew(text):
@@ -30,20 +32,24 @@ def format_text(text):
     else:
         return f'<div style="text-align: left; direction: ltr;">{text}</div>'
 
+def get_audio_length(audio_file_path):
+    audio = AudioSegment.from_file(audio_file_path)
+    return len(audio) / 1000.0
+
 def transcribe(audio_numpy, sampling_rate=16000):
     if audio_numpy.ndim > 1:
         audio_numpy = audio_numpy.mean(axis=1)
 
     temp_dir = tempfile.mkdtemp()
-    chunks = np.array_split(audio_numpy, indices_or_sections=int(np.ceil(len(audio_numpy) / (sampling_rate * 30))))  # 30s chunks
+    chunks = np.array_split(audio_numpy, indices_or_sections=int(np.ceil(len(audio_numpy) / (sampling_rate * 10))))
     transcribed_text = ""
 
     for i, chunk in enumerate(chunks):
         chunk_path = os.path.join(temp_dir, f"chunk_{i}.wav")
         sf.write(chunk_path, chunk, samplerate=sampling_rate)
-        input_features = processor(chunk, sampling_rate=sampling_rate, return_tensors="pt").input_features.to(device)
-        predicted_ids = model.generate(input_features, num_beams=5)
-        chunk_text = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+        input_features = hebrew_processor(chunk, sampling_rate=sampling_rate, return_tensors="pt").input_features.to(device)
+        predicted_ids = hebrew_model.generate(input_features, num_beams=5)
+        chunk_text = hebrew_processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
         transcribed_text += chunk_text + " "
 
     shutil.rmtree(temp_dir)
@@ -54,29 +60,31 @@ def translate_text(text, target_lang):
     translated_text = translator.translate(text, dest=translations[target_lang]).text
     return translated_text
 
-def split_into_paragraphs(text, min_words_per_paragraph=20):
-    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
-    paragraphs = []
-    current_paragraph = []
+def split_lines(text, max_line_length=40):
+    words = text.split()
+    lines = []
+    current_line = []
 
-    for sentence in sentences:
-        words_in_sentence = sentence.split()
-        current_paragraph.extend(words_in_sentence)
-        if len(current_paragraph) >= min_words_per_paragraph:
-            paragraphs.append(' '.join(current_paragraph))
-            current_paragraph = []
+    for word in words:
+        if len(' '.join(current_line + [word])) <= max_line_length:
+            current_line.append(word)
+        else:
+            lines.append(' '.join(current_line))
+            current_line = [word]
+    
+    if current_line:
+        lines.append(' '.join(current_line))
+    
+    return lines
 
-    if current_paragraph:
-        paragraphs.append(' '.join(current_paragraph))
+def format_srt_entry(segment_id, start_time, end_time, lines):
+    if len(lines) > 2:
+        lines = [' '.join(lines[i:i + 2]) for i in range(0, len(lines), 2)]
+    srt_entry = f"{segment_id}\n{start_time} --> {end_time}\n" + "\n".join(lines) + "\n\n"
+    return srt_entry
 
-    return '\n\n'.join(paragraphs)
-
-from pydub import AudioSegment
-
-
-def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_length=50):
-    print("Starting transcription and translation process...")
-
+def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_length=40):
+    audio_length = get_audio_length(audio_file_path)
     audio = AudioSegment.from_file(audio_file_path)
     audio_numpy = np.array(audio.get_array_of_samples(), dtype=np.float32) / 32768.0
     audio_numpy = librosa.resample(audio_numpy, orig_sr=audio.frame_rate, target_sr=16000)
@@ -87,41 +95,40 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
             temp_file_name = tmpfile.name
             sf.write(tmpfile.name, audio_numpy, 16000)
 
-        transcription_result = whisper.load_model("large").transcribe(audio=temp_file_name)
+        transcription_result = english_model.transcribe(temp_file_name)
 
         srt_content = ""
+        previous_end_time = 0
         for segment in transcription_result['segments']:
-            start_time = str(datetime.timedelta(seconds=int(segment['start']))) + ',000'
-            end_time = str(datetime.timedelta(seconds=int(segment['end']))) + ',000'
+            start_time_seconds = max(segment['start'], previous_end_time)
+            end_time_seconds = min(segment['end'], audio_length)
+
+            if end_time_seconds <= start_time_seconds:
+                continue
+
+            start_time = str(datetime.timedelta(seconds=start_time_seconds)).split(".")[0] + ',000'
+            end_time = str(datetime.timedelta(seconds=end_time_seconds)).split(".")[0] + ',000'
             text = segment['text']
             segment_id = segment['id'] + 1
+            previous_end_time = end_time_seconds
 
-            lines = []
-            while len(text) > max_line_length:
-                split_index = text.rfind(' ', 0, max_line_length)
-                if split_index == -1:
-                    split_index = max_line_length
-                lines.append(text[:split_index].strip())
-                text = text[split_index:].strip()
-            lines.append(text)
-
-            srt_entry = f"{segment_id}\n{start_time} --> {end_time}\n"
+            lines = split_lines(text, max_line_length=max_line_length)
 
             translated_lines = []
             for line in lines:
-                for attempt in range(3):  # Retry translation up to 3 times
+                for attempt in range(3):
                     try:
-                        translated_line = translator.translate(line, dest='he').text
+                        translated_line = translate_text(line, 'Hebrew')
                         translated_lines.append(translated_line)
                         break
                     except Exception as e:
                         print(f"Translation failed (attempt {attempt+1}): {str(e)}")
                         if attempt < 2:
-                            time.sleep(1)  # Delay before retrying
+                            time.sleep(1)
                         else:
-                            translated_lines.append(line)  # Use original English line if translation fails
+                            translated_lines.append(line)
 
-            srt_entry += "\n".join(translated_lines) + "\n\n"
+            srt_entry = format_srt_entry(segment_id, start_time, end_time, translated_lines)
             srt_content += srt_entry
 
         os.makedirs("output", exist_ok=True)
@@ -129,7 +136,6 @@ def generate_srt_content(audio_file_path, target_language='Hebrew', max_line_len
         with open(srt_file_path, "w", encoding="utf-8") as srt_file:
             srt_file.write(srt_content)
 
-        # הפיכת srt_content לפורמט HTML עם שורות נפרדות
         srt_html_content = ""
         for line in srt_content.split('\n'):
             srt_html_content += f"<div>{line}</div>"
@@ -145,12 +151,12 @@ def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox)
         return format_text("Please choose a Target Language")
 
     translations = {'Hebrew': 'he', 'English': 'en', 'Spanish': 'es', 'French': 'fr'}
+    audio_length = get_audio_length(audio_file)
 
     audio = AudioSegment.from_file(audio_file)
     audio_numpy = np.array(audio.get_array_of_samples(), dtype=np.float32) / 32768.0
     audio_numpy = librosa.resample(audio_numpy, orig_sr=audio.frame_rate, target_sr=16000)
 
-    # Check GPU usage before transcription
     if torch.cuda.is_available():
         print("GPU is available")
         gpu_info = torch.cuda.get_device_properties(0)
@@ -160,30 +166,30 @@ def transcribe_and_translate(audio_file, target_language, generate_srt_checkbox)
 
     transcribed_text = transcribe(audio_numpy)
 
-    # Check GPU usage after transcription
     if torch.cuda.is_available():
         print(f"GPU memory usage after transcription:")
         print(torch.cuda.memory_summary(device=None, abbreviated=False))
 
     if generate_srt_checkbox:
         srt_result = generate_srt_content(audio_file, target_language)
-        return srt_result
+        return f"Audio Length: {audio_length} seconds\n\n" + srt_result
     else:
         if isinstance(target_language, list):
             target_language = target_language[0]
 
+        translated_text = transcribed_text
         if translations.get(target_language) != 'he':
             translated_text = translate_text(transcribed_text, target_language)
-            final_text = split_into_paragraphs(translated_text)
         else:
-            final_text = split_into_paragraphs(transcribed_text)
+            translated_text = translate_text(transcribed_text, target_language)
 
+        final_text = split_lines(translated_text)
         os.makedirs("output", exist_ok=True)
         result_file_path = os.path.join("output", "result.txt")
         with open(result_file_path, "w", encoding="utf-8") as result_file:
-            result_file.write(final_text)
+            result_file.write('\n\n'.join(final_text))
 
-        return format_text(final_text)
+        return f"Audio Length: {audio_length} seconds\n\n" + format_text('\n\n'.join(final_text))
 
 title = "Unlimited Length Transcription and Translation"
 description = "With: ivrit-ai/whisper-v2-d3-e3 | GUI by Shmuel Ronen"
