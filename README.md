@@ -4,21 +4,6 @@ A powerful transcription and translation tool leveraging the ivrit-ai/whisper-v2
 
 ![HW](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/9ed4f4c1-ea5f-4c21-91b9-3c1369308dcc)
 
-#### NEW: The output files will saved automaticly in output folder as .txt or .srt.
-
-#### NEW: Creating an SRT file in Hebrew from any language.
-
-#### NEW: Added the ability to translate the sound file text to the other languages in the menu.
-please update the installation:
-```
-git pull
-```
-
-#### NEW: Docker support brunch By dawnburst:
-```
-https://github.com/dawnburst/hebrew_whisper/tree/support-docker
-```
-
 
 ## Installation steps
 
