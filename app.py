@@ -331,7 +331,7 @@ def generate_srt(segments, target_language):
     return srt_html_content
         
 title = "Unlimited Length Transcription and Translation"
-description = "With: large-v2 or ivrit-ai/whisper-v2-d3-e3 | GUI by Shmuel Ronen"
+description = "With: large-v2 or ivrit-ai/whisper-v2-d3-e3 and whisper-v2 large | GUI by Shmuel Ronen"
 
 interface = gr.Interface(
     fn=transcribe_and_translate,
