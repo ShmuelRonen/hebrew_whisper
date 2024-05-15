@@ -2,7 +2,7 @@
 
 A powerful transcription and translation tool leveraging the ivrit-ai/whisper-v2-d3-e3 model and Whisper-v2 model for high-quality, unlimited-length audio processing with enhanced paragraph splitting and temporary file management for a clean workspace.
 
-![HW](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/9ed4f4c1-ea5f-4c21-91b9-3c1369308dcc)
+![V2](https://github.com/ShmuelRonen/hebrew_whisper/assets/80190186/1ef67524-a063-472d-a752-0a61a495d824)
 
 
 ## Features
